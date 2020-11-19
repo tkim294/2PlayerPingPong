@@ -8,7 +8,9 @@ $(function () {
     var paddle = $('.paddle');
     var paddle_1 = $('#paddle_1');
     var paddle_2 = $('#paddle_2');
-    var restart_btn = $('#restart_btn');
+    var restart_div = $('#restart_div');
+    var restart_btn = $('#restart');
+    var winner = $('#winner');
 
     // saving some initial setup
     var container_width = parseInt(container.width());
@@ -40,15 +42,17 @@ $(function () {
     /*-------------------------------- GAME CODE STARTS HERE -------------------------------*/
 
     $(document).on('keydown', function (e) {
-        var key = e.keyCode;
-        if(key === 37 && move_left_p1 === false) {
-            move_left_p1 = requestAnimationFrame(left_p1);
-        } else if (key === 39 && move_right_p1 === false) {
-            move_right_p1 = requestAnimationFrame(right_p1);
-        } else if(key === 65 && move_left_p2 === false) {
-            move_left_p2 = requestAnimationFrame(left_p2);
-        } else if (key === 83 && move_right_p2 === false) {
-            move_right_p2 = requestAnimationFrame(right_p2);
+        if(game_over === false) {
+            var key = e.keyCode;
+            if(key === 37 && move_left_p1 === false) {
+                move_left_p1 = requestAnimationFrame(left_p1);
+            } else if (key === 39 && move_right_p1 === false) {
+                move_right_p1 = requestAnimationFrame(right_p1);
+            } else if(key === 65 && move_left_p2 === false) {
+                move_left_p2 = requestAnimationFrame(left_p2);
+            } else if (key === 83 && move_right_p2 === false) {
+                move_right_p2 = requestAnimationFrame(right_p2);
+            }
         }
     });
 
@@ -96,6 +100,83 @@ $(function () {
             move_right_p2 = requestAnimationFrame(right_p2);
         }
     }
+
+    /*-------------------------------- Ball controls STARTS HERE -------------------------------*/
+
+    anim_id = requestAnimationFrame(repeat);
+
+    function repeat() {
+
+        if(game_over === false) {
+
+            if (collision(ball, paddle_1)) {
+                ball_center = parseInt(ball.css('left')) + ball_width / 2;
+                paddle_center = parseInt(paddle_1.css('left')) + paddle_width / 2;
+                ball_right_left =(ball_center > paddle_center ? 'right' : 'left'); 
+                right_left_angle = parseInt(Math.abs(paddle_center - ball_center) / 6);
+                ball_go = 'up';
+            } else if (collision(ball, paddle_2)) {
+                ball_center = parseInt(ball.css('left')) + ball_width / 2;
+                paddle_center = parseInt(paddle_2.css('left')) + paddle_width / 2;
+                ball_right_left =(ball_center > paddle_center ? 'right' : 'left'); 
+                right_left_angle = parseInt(Math.abs(paddle_center - ball_center) / 6);
+                ball_go = 'down';
+            } else if (parseInt(ball.css('left')) <= 0) {
+                ball_right_left = 'right';
+            } else if (parseInt(ball.css('left'))  >= container_width - ball_width) {
+                ball_right_left = 'left';
+            } else if (parseInt(ball.css('top')) <= 0 ) {
+                who_won = 'Player 1';
+                stop_the_game();
+            } else if (parseInt(ball.css('top')) >= container_height - ball_height) {
+                who_won = 'Player 2';
+                stop_the_game();
+            } 
+
+            if (ball_go === 'down') {
+                ball_down();
+            } else {
+                ball_up();
+            }
+
+            anim_id = requestAnimationFrame(repeat);
+
+        }
+
+    }
+
+    function ball_down() {
+        ball.css('top', parseInt(ball.css('top')) + top);
+        if (ball_right_left === 'right') {
+            ball.css('left', parseInt(ball.css('left')) + right_left_angle);
+        } else {
+            ball.css('left', parseInt(ball.css('left')) - right_left_angle);
+        }
+    }
+
+    function ball_up() {
+        ball.css('top', parseInt(ball.css('top')) - top);
+        if (ball_right_left === 'right') {
+            ball.css('left', parseInt(ball.css('left')) + right_left_angle);
+        } else {
+            ball.css('left', parseInt(ball.css('left')) - right_left_angle);
+        }
+    }
+
+    function stop_the_game() {
+        game_over = true;
+        cancelAnimationFrame(anim_id);
+        cancelAnimationFrame(move_left_p1);
+        cancelAnimationFrame(move_right_p1);
+        cancelAnimationFrame(move_left_p2);
+        cancelAnimationFrame(move_right_p2);
+        winner.text(who_won + ' won the game');
+        restart_div.slideDown();
+    }
+
+    restart_btn.click(function () {
+        location.reload();
+    })
 
 
     /*-------------------------------- GAME CODE ENDS HERE -------------------------------*/
